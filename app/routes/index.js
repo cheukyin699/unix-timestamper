@@ -1,23 +1,12 @@
 'use strict';
 
 var path = process.cwd();
-var ClickHandler = require(path + '/app/controllers/clickHandler.server.js');
 
 // Do I really have to do this?
 var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
 'August', 'September', 'October', 'November', 'December'];
 
-module.exports = function (app, passport) {
-
-	function isLoggedIn (req, res, next) {
-		if (req.isAuthenticated()) {
-			return next();
-		} else {
-			res.redirect('/login');
-		}
-	}
-
-	var clickHandler = new ClickHandler();
+module.exports = function (app) {
 
 	app.route('/')
 		.get(function (req, res) {
@@ -32,11 +21,11 @@ module.exports = function (app, passport) {
 			var adate = new Date(Date.parse(date));
 			if (!isNaN(adate)) {
 				data.natural = date;
-				data.unix = adate.getTime();
+				data.unix = adate.getTime() / 1000;
 			} else {
 				date = parseInt(date);
 				if (!isNaN(date)) {
-					adate = new Date(date);
+					adate = new Date(date * 1000);
 					data.unix = date;
 					data.natural = months[adate.getMonth()] + ' ' +
 					adate.getDate() + ', ' + adate.getFullYear();
