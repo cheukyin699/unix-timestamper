@@ -3,6 +3,10 @@
 var path = process.cwd();
 var ClickHandler = require(path + '/app/controllers/clickHandler.server.js');
 
+// Do I really have to do this?
+var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+'August', 'September', 'October', 'November', 'December'];
+
 module.exports = function (app, passport) {
 
 	function isLoggedIn (req, res, next) {
@@ -16,42 +20,29 @@ module.exports = function (app, passport) {
 	var clickHandler = new ClickHandler();
 
 	app.route('/')
-		.get(isLoggedIn, function (req, res) {
+		.get(function (req, res) {
 			res.sendFile(path + '/public/index.html');
 		});
 
-	app.route('/login')
-		.get(function (req, res) {
-			res.sendFile(path + '/public/login.html');
-		});
-
-	app.route('/logout')
-		.get(function (req, res) {
-			req.logout();
-			res.redirect('/login');
-		});
-
-	app.route('/profile')
-		.get(isLoggedIn, function (req, res) {
-			res.sendFile(path + '/public/profile.html');
-		});
-
 	app.route('/api/:id')
-		.get(isLoggedIn, function (req, res) {
-			res.json(req.user.github);
+		.get(function (req, res) {
+			var date = req.params.id;
+			var data = {'unix': null, 'natural': null};
+			
+			var adate = new Date(Date.parse(date));
+			if (!isNaN(adate)) {
+				data.natural = date;
+				data.unix = adate.getTime();
+			} else {
+				date = parseInt(date);
+				if (!isNaN(date)) {
+					adate = new Date(date);
+					data.unix = date;
+					data.natural = months[adate.getMonth()] + ' ' +
+					adate.getDate() + ', ' + adate.getFullYear();
+				}
+			}
+			
+			res.json(data);
 		});
-
-	app.route('/auth/github')
-		.get(passport.authenticate('github'));
-
-	app.route('/auth/github/callback')
-		.get(passport.authenticate('github', {
-			successRedirect: '/',
-			failureRedirect: '/login'
-		}));
-
-	app.route('/api/:id/clicks')
-		.get(isLoggedIn, clickHandler.getClicks)
-		.post(isLoggedIn, clickHandler.addClick)
-		.delete(isLoggedIn, clickHandler.resetClicks);
 };
